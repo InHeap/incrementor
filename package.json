@@ -1,0 +1,16 @@
+{
+  "name": "incrementor",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "types": "src/index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "es-entity": "*",
+    "redis": "*"
+  }
+}
