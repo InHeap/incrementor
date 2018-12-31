@@ -1,6 +1,6 @@
 import * as redis from 'redis';
 
-import IConfig from './bean/IConfig';
+import IOptions from './bean/IOptions';
 import IDbContext from './bean/IDbContext';
 import DbContext from './DbContext';
 import IncrementorModel from './model/Incrementor';
@@ -11,33 +11,41 @@ export default class IncrementorService {
 
 	redisClient: redis.RedisClient = null;
 	dbContext: IDbContext = null;
+	dbFunc: (appId: number) => Promise<IDbContext> = null;
 	entity: string = null;
 
-	constructor(entity: string, config: IConfig) {
-		this.entity = entity;
+	constructor(opts: IOptions) {
+		this.entity = opts.entity;
 
-		this.setupRedis(config);
-		this.setupDbContext(config);
+		this.setupRedis(opts);
+		this.setupDbContext(opts);
 	}
 
-	setupRedis(config: IConfig) {
-		if (config.redisClient) {
-			this.redisClient = config.redisClient;
-		} else if (config.redisOpts) {
-			this.redisClient = redis.createClient(config.redisOpts);
+	setupRedis(opts: IOptions) {
+		if (opts.redisClient) {
+			this.redisClient = opts.redisClient;
+		} else if (opts.redisOpts) {
+			this.redisClient = redis.createClient(opts.redisOpts);
 		} else {
 			throw 'Redis Client Not Found';
 		}
 	}
 
-	setupDbContext(config: IConfig) {
-		if (config.dbContext) {
-			this.dbContext = config.dbContext;
-		} else if (config.dbConfig) {
-			this.dbContext = new DbContext(config.dbConfig);
+	setupDbContext(opts: IOptions) {
+		if (opts.dbContext) {
+			this.dbContext = opts.dbContext;
+		} else if (opts.dbConfig) {
+			this.dbContext = new DbContext(opts.dbConfig);
+		} else if (opts.dbFunc) {
+			this.dbFunc = opts.dbFunc;
 		} else {
 			throw 'DB Context Not Found';
 		}
+	}
+
+	getKey(appId: number) {
+		let valKey = `INCR-${this.entity}-${appId}`;
+		return valKey;
 	}
 
 	private async	getFromRedis(valKey: string) {
@@ -53,7 +61,8 @@ export default class IncrementorService {
 
 	private async	getEntity(appId: number) {
 		let that = this;
-		let incr = await this.dbContext.incrementors.where(a => {
+		let context = this.dbContext ? this.dbContext : await this.dbFunc(appId);
+		let incr = await context.incrementors.where(a => {
 			return a.appId.eq(appId).and(a.entity.eq(that.entity));
 		}).unique();
 
@@ -64,20 +73,22 @@ export default class IncrementorService {
 			incr.appId.set(appId);
 
 			incr.val.set(0);
-			incr = await this.dbContext.incrementors.insert(incr);
+			incr = await context.incrementors.insert(incr);
 		}
 		return incr;
 	}
 
-	private async	addIncrements(key: string, incr: IncrementorModel) {
+	private async	addIncrements(appId: number, incr: IncrementorModel) {
 		let oldVal = incr.val.get();
 		let newVal = oldVal + MARGIN;
 
 		incr.val.set(newVal);
-		await this.dbContext.incrementors.update(incr);
+		let context = this.dbContext ? this.dbContext : await this.dbFunc(appId);
+		await context.incrementors.update(incr);
 
+		let valKey = this.getKey(appId);
 		for (let i = oldVal; i < newVal; i++) {
-			this.redisClient.rpush(key, i);
+			this.redisClient.rpush(valKey, i);
 		}
 	}
 
@@ -93,8 +104,9 @@ export default class IncrementorService {
 				// Loaded vals are finished. Increment counter buffer
 				let incr = await this.getEntity(appId);
 
-				await this.addIncrements(valKey, incr);
+				await this.addIncrements(appId, incr);
 
+				let valKey = this.getKey(appId);
 				let resStr = await this.getFromRedis(valKey);
 				result = Number.parseInt(resStr);
 			}

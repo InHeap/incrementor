@@ -4,5 +4,5 @@ const bean = require("./bean");
 exports.bean = bean;
 const model = require("./model");
 exports.model = model;
-const Incrementor_1 = require("./Incrementor");
-exports.Incrementor = Incrementor_1.default;
+const IncrementorService_1 = require("./IncrementorService");
+exports.IncrementorService = IncrementorService_1.default;

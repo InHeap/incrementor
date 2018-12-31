@@ -1,3 +1,3 @@
-import IConfig from './IConfig';
+import IOptions from './IOptions';
 
-export { IConfig };
+export { IOptions as IConfig };

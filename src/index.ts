@@ -1,8 +1,8 @@
 import * as bean from './bean';
 import * as model from './model';
 
-import Incrementor from './Incrementor';
+import IncrementorService from './IncrementorService';
 
 export { bean };
 export { model };
-export { Incrementor };
+export { IncrementorService };
