@@ -98,7 +98,7 @@ class IncrementorService {
         catch (err) {
             console.error(err);
         }
-        return `${result}`;
+        return result;
     }
 }
 exports.default = IncrementorService;
