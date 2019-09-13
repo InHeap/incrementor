@@ -76,7 +76,7 @@ class IncrementorService {
         await context.incrementors.update(incr);
         let valKey = this.getKey(appId);
         for (let i = oldVal; i < newVal; i++) {
-            this.redisClient.rpush(valKey, i);
+            this.redisClient.rpush(valKey, i.toString());
         }
     }
     async get(appId) {

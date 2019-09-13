@@ -1,8 +1,0 @@
-{
-  "globalDependencies": {
-    "node": "registry:dt/node"
-  },
-  "dependencies": {
-    "redis": "registry:dt/redis"
-  }
-}

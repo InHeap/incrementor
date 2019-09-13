@@ -88,7 +88,7 @@ export default class IncrementorService {
 
 		let valKey = this.getKey(appId);
 		for (let i = oldVal; i < newVal; i++) {
-			this.redisClient.rpush(valKey, i);
+			this.redisClient.rpush(valKey, i.toString());
 		}
 	}
 
